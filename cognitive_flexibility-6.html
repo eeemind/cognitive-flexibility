@@ -1,0 +1,873 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#10121b">
+<title>Cognitive Flexibility</title>
+<style>
+  :root{
+    color-scheme:dark;
+    --bg:#10121b; --bg2:#171a27; --panel:#1b1f2d; --panel2:#23283a;
+    --line:rgba(255,255,255,.09); --muted:#939bb1; --text:#f3f5ff;
+    --accent:#a5b4fc; --accent2:#818cf8; --good:#71e1b1; --bad:#ff8294;
+    --radius:16px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;width:100%;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+  body{overflow:hidden;background:radial-gradient(ellipse at 50% 43%,rgba(69,79,135,.17),transparent 40%),var(--bg)}
+  button,input,select{font:inherit}
+  button{color:inherit;cursor:pointer}
+  button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #a5b4fc;outline-offset:3px}
+  .app{height:100dvh;min-height:480px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+  .topbar{height:88px;flex:0 0 88px;position:relative;z-index:2;padding-top:13px}
+  .brand{position:absolute;top:13px;left:50%;transform:translateX(-50%);text-align:center;white-space:nowrap;pointer-events:none}
+  .brand h1{font-size:clamp(17px,2.4vw,21px);font-weight:650;letter-spacing:.025em;margin:0;color:#f7f8ff}
+  .brand a{display:inline-block;margin-top:3px;color:#98a3ca;font-size:11px;letter-spacing:.02em;text-decoration:none;pointer-events:auto}
+  .brand a:hover{color:#d2d8ff;text-decoration:underline}
+  .left-tools{position:absolute;top:12px;left:12px;display:flex;flex-direction:column;gap:7px}
+  .right-tools{position:absolute;top:12px;right:12px}
+  .tool-btn{border:1px solid var(--line);border-radius:12px;background:rgba(28,32,48,.8);padding:8px 10px;display:flex;align-items:center;gap:7px;font-size:12px;color:#d9def2;box-shadow:0 4px 18px rgba(0,0,0,.12);transition:background .15s,border-color .15s}
+  .tool-btn:hover{background:#272d42;border-color:rgba(165,180,252,.35)}
+  .tool-btn svg{width:15px;height:15px;flex:none;opacity:.9}
+  .game-area{min-height:0;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 18px 7px;position:relative}
+  .cue-stack{min-height:54px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;text-align:center;margin-bottom:10px;gap:7px;width:min(94vw,850px)}
+  .step-label{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#98a2be;min-height:12px}
+  .rule-line{font-size:clamp(10px,1.4vw,12px);line-height:1.5;letter-spacing:.06em;text-transform:uppercase;color:#bdc5df;min-height:16px}
+  .rule-line .rule-key{color:#f0f2ff;font-weight:700}
+  .shift-banner{font-size:11px;line-height:1.5;letter-spacing:.035em;text-transform:none;color:#c9ceff;white-space:pre-line;text-align:center;max-width:min(96vw,850px);min-height:12px;opacity:0;transition:opacity .2s}
+  .shift-banner.visible{opacity:1}
+  .shift-banner.mapping-change{color:#d7dcff;font-weight:600}
+  .stimulus-stage{width:min(94vw,850px);min-height:210px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:19px;transition:opacity .14s;overflow:visible}
+  .stimulus-stage.dim{opacity:.25}
+  .empty-state{text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+  .empty-title{font-size:18px;font-weight:600;color:#e9ecfb}
+  .empty-sub{font-size:12px;color:var(--muted)}
+  .primary-btn{border:0;border-radius:12px;background:linear-gradient(135deg,#a5b4fc,#818cf8);color:#16182a;font-weight:750;padding:11px 19px;box-shadow:0 8px 24px rgba(129,140,248,.16)}
+  .primary-btn:hover{filter:brightness(1.06)}
+  .stimulus-word{font-size:clamp(37px,7.6vw,68px);line-height:1.08;letter-spacing:.025em;font-weight:850;text-align:center;max-width:100%;overflow-wrap:anywhere;text-shadow:0 5px 22px rgba(0,0,0,.16)}
+  .stimulus-pair{font-size:clamp(24px,5vw,48px);line-height:1.15;letter-spacing:.015em;font-weight:850;text-align:center;overflow-wrap:anywhere;max-width:96vw}
+  .shape-stage{display:flex;justify-content:center;align-items:center;min-height:110px;gap:10px;flex-wrap:wrap;max-width:min(90vw,550px)}
+  .shape-stage svg{display:block;filter:drop-shadow(0 5px 13px rgba(0,0,0,.14));flex:none}
+  .digit-pair{display:flex;align-items:baseline;justify-content:center;gap:clamp(15px,5vw,42px);flex-wrap:wrap}
+  .digit-glyph{font-size:clamp(64px,11vw,105px);font-weight:800;line-height:1}
+  .digit-word{font-size:clamp(24px,5vw,47px);font-weight:750;letter-spacing:.03em}
+  .quantity-stage{display:grid;grid-template-columns:repeat(3, minmax(0,1fr));gap:5px 9px;align-items:center;justify-items:center;width:min(85vw,270px);min-height:100px}
+  .quantity-stage svg{width:clamp(28px,5.6vw,48px);height:clamp(28px,5.6vw,48px)}
+  .session-meta{height:19px;margin-top:7px;color:#747e98;font-size:11px;letter-spacing:.04em;text-align:center}
+  .answer-zone{flex:0 0 auto;min-height:105px;padding:11px 14px max(17px,env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:9px;position:relative;z-index:1}
+  .answer-prompt{font-size:10px;letter-spacing:.13em;color:#8f99b3;text-transform:uppercase;text-align:center;min-height:12px}
+  .answer-buttons{display:flex;flex-wrap:wrap;justify-content:center;align-items:stretch;gap:clamp(6px,1.5vw,13px);width:100%;max-width:900px}
+  .set-button{width:auto;min-width:clamp(39px,6.6vw,58px);max-width:min(18vw,108px);min-height:clamp(43px,6.5vw,54px);height:auto;padding:5px 8px;border-radius:13px;border:1px solid rgba(255,255,255,.11);background:linear-gradient(180deg,#272d43,#1b2031);font-size:15px;font-weight:750;box-shadow:0 5px 12px rgba(0,0,0,.17);transition:transform .1s,background .1s,border-color .1s;touch-action:manipulation;overflow-wrap:anywhere}
+  .set-button:hover:not(:disabled){background:#343b56;border-color:rgba(165,180,252,.4);transform:translateY(-2px)}
+  .set-button:active:not(:disabled){transform:scale(.97)}
+  .set-button:disabled{opacity:.35;cursor:default}
+  .set-button .button-label{display:block;line-height:1.1;overflow-wrap:anywhere}
+  .feedback{height:16px;font-size:11px;letter-spacing:.03em;color:var(--muted);text-align:center}
+  .feedback.good{color:var(--good)} .feedback.bad{color:var(--bad)}
+  .overlay{position:absolute;inset:0;background:rgba(3,5,13,.57);backdrop-filter:blur(3px);z-index:10;opacity:0;pointer-events:none;transition:opacity .22s}
+  .overlay.open{opacity:1;pointer-events:auto}
+  .drawer{position:absolute;top:0;bottom:0;width:min(420px,92vw);z-index:11;background:rgba(24,28,42,.98);border-color:var(--line);box-shadow:0 0 55px rgba(0,0,0,.35);display:flex;flex-direction:column;transition:transform .26s cubic-bezier(.2,.75,.2,1);backdrop-filter:blur(18px)}
+  .drawer.left{left:0;border-right:1px solid var(--line);transform:translateX(-103%)}
+  .drawer.right{right:0;border-left:1px solid var(--line);transform:translateX(103%)}
+  .drawer.open{transform:translateX(0)}
+  .drawer-head{height:67px;flex:0 0 67px;display:flex;align-items:center;justify-content:space-between;padding:0 19px;border-bottom:1px solid var(--line)}
+  .drawer-head h2{font-size:16px;letter-spacing:.01em;margin:0;font-weight:700}
+  .drawer-head .sub{font-size:11px;color:var(--muted);margin-top:3px}
+  .close-btn{height:34px;width:34px;border:1px solid var(--line);border-radius:10px;background:#23283a;display:grid;place-items:center;color:#dce1f5;font-size:21px;line-height:1}
+  .drawer-body{overflow:auto;overscroll-behavior:contain;padding:17px 18px 28px;flex:1}
+  .section-label{font-size:10px;letter-spacing:.14em;color:#8e99b5;text-transform:uppercase;margin:2px 0 11px}
+  .setting-section{margin-bottom:23px}
+  .session-controls{display:flex;gap:9px}
+  .session-controls button{flex:1}
+  .secondary-btn{border:1px solid var(--line);border-radius:11px;background:#292f43;color:#e4e8fa;padding:10px 12px;font-size:12px;font-weight:650}
+  .secondary-btn:hover{background:#343c55}
+  .danger-btn{border-color:rgba(255,130,148,.22);color:#ffb0bb;background:rgba(115,36,51,.23)}
+  .field-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px 12px}
+  .field{display:flex;flex-direction:column;gap:7px;min-width:0}
+  .field.full{grid-column:1/-1}
+  .field label,.field .field-label{font-size:12px;color:#d9def2;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .field .hint{font-size:10px;color:#7f89a4;font-weight:400}
+  .field input[type=number],.field input[type=text],.field select{width:100%;min-width:0;height:38px;border:1px solid var(--line);border-radius:10px;background:#141827;color:#f2f4ff;padding:0 10px;font-size:12px;outline-offset:2px}
+  .field input[type=text]{text-align:center}
+  .field input[type=number]{appearance:textfield}
+  .field input[type=number]::-webkit-inner-spin-button{appearance:none}
+  .toggle-row{display:flex;gap:8px;flex-wrap:wrap}
+  .toggle-chip{display:flex;align-items:center;gap:7px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#151a29;color:#bac3dc;font-size:12px;cursor:pointer;flex:1;min-width:84px}
+  .toggle-chip input{accent-color:#a5b4fc;margin:0}
+  .toggle-chip:has(input:checked){background:rgba(129,140,248,.14);border-color:rgba(165,180,252,.36);color:#edf0ff}
+  .toggle-chip:has(input:disabled){opacity:.7;cursor:default}
+  .settings-note{font-size:10px;color:#858fab;line-height:1.45;margin-top:8px}
+  .rebind-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  .rebind-actions button{padding:9px 7px;font-size:11px}
+  fieldset{border:0;padding:0;margin:0;min-width:0}
+  fieldset:disabled{opacity:.52}
+  .mapping-group{margin-bottom:19px}
+  .mapping-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+  .mapping-title strong{font-size:12px;font-weight:700}
+  .mapping-title span{font-size:10px;color:#8993ad}
+  .mapping-items{display:flex;flex-wrap:wrap;gap:7px}
+  .mapping-item{border:1px solid var(--line);background:#191e2d;border-radius:9px;padding:6px 8px;font-size:11px;color:#d1d7ec;display:flex;align-items:center;gap:6px;max-width:100%}
+  .mapping-item .set-tag{color:#aeb9ff;font-weight:750;font-size:10px}
+  .mapping-item.no-go{border-color:rgba(255,130,148,.45);background:rgba(115,36,51,.2)}
+  .mapping-item .ng{font-size:8px;letter-spacing:.06em;text-transform:uppercase;color:#ff9bab;font-weight:800}
+  .mapping-empty{font-size:12px;color:#8c96b0;line-height:1.6}
+  .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:23px}
+  .stat-card{padding:14px 13px;border:1px solid var(--line);border-radius:13px;background:linear-gradient(145deg,rgba(39,45,66,.8),rgba(25,29,44,.8));min-width:0}
+  .stat-card .value{font-size:23px;font-weight:750;letter-spacing:-.03em;color:#f0f2ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .stat-card .label{font-size:10px;color:#939db7;margin-top:4px}
+  .progress-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:12px}
+  .progress-row span:first-child{color:#aab3cb}.progress-row strong{font-weight:650;color:#e9ecfa;text-align:right}
+  .history-item{padding:11px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:11px}
+  .history-item .date{color:#dce1f4;font-weight:650}.history-item .detail{margin-top:4px;color:#8c96b0}.history-item .percent{font-size:15px;font-weight:750;color:#c5ccff}
+  .tiny-muted{font-size:10px;color:#7f89a4;line-height:1.5}
+  @media (max-width:600px){
+    .topbar{height:82px;flex-basis:82px}
+    .brand{top:14px}
+    .brand h1{font-size:16px}
+    .brand a{font-size:10px}
+    .left-tools{left:8px;top:9px;gap:6px}
+    .right-tools{right:8px;top:9px}
+    .tool-btn{padding:8px;border-radius:10px;gap:5px;font-size:11px}
+    .tool-btn .tool-label{display:none}
+    .game-area{padding:0 8px 2px}
+    .cue-stack{min-height:47px;margin-bottom:5px;gap:5px;width:98vw}
+    .rule-line{max-width:98vw;font-size:9px;letter-spacing:.035em}
+    .stimulus-stage{min-height:180px;gap:14px;width:98vw}
+    .answer-zone{min-height:99px;padding-left:7px;padding-right:7px}
+    .set-button{min-width:clamp(31px,8.2vw,47px);max-width:22vw;min-height:45px;height:auto;padding:4px 5px;border-radius:11px;font-size:14px}
+    .answer-buttons{gap:clamp(4px,1.3vw,7px)}
+    .drawer-body{padding:15px 14px 24px}
+    .field-grid{gap:12px 9px}
+    .quantity-stage{gap:3px 5px}
+  }
+  @media (max-height:620px){
+    .topbar{height:73px;flex-basis:73px}
+    .brand{top:9px}
+    .stimulus-stage{min-height:135px;gap:9px}
+    .cue-stack{min-height:40px;margin-bottom:1px}
+    .answer-zone{min-height:87px;padding-top:6px;padding-bottom:max(9px,env(safe-area-inset-bottom))}
+    .shape-stage{min-height:85px}
+  }
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="topbar">
+    <div class="left-tools">
+      <button class="tool-btn" id="openSettings" aria-label="Open settings" title="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg><span class="tool-label">Settings</span>
+      </button>
+      <button class="tool-btn" id="openSets" aria-label="Show stimulus sets" title="Sets">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span class="tool-label">Sets</span>
+      </button>
+    </div>
+    <div class="brand"><h1>Cognitive Flexibility</h1><a href="https://discord.gg/brain" target="_blank" rel="noopener noreferrer">Mindbuilding Discord</a></div>
+    <div class="right-tools">
+      <button class="tool-btn" id="openProgress" aria-label="Open progress" title="Progress">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h17"/><path d="m7 15 4-4 3 2 6-7"/></svg><span class="tool-label">Progress</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="game-area">
+    <div class="cue-stack">
+      <div class="step-label" id="stepLabel"></div>
+      <div class="rule-line" id="ruleLine"></div>
+      <div class="shift-banner" id="shiftBanner" role="status" aria-live="polite" aria-atomic="true"></div>
+    </div>
+    <div class="stimulus-stage" id="stimulusStage" aria-live="polite">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-title">Ready?</div>
+        <div class="empty-sub">Start a session when you're ready.</div>
+        <button class="primary-btn" id="mainStart">Start session</button>
+      </div>
+    </div>
+    <div class="session-meta" id="sessionMeta"></div>
+  </main>
+
+  <footer class="answer-zone">
+    <div class="answer-prompt" id="answerPrompt">Choose the matching set</div>
+    <div class="answer-buttons" id="answerButtons"></div>
+    <div class="feedback" id="feedback"></div>
+  </footer>
+
+  <div class="overlay" id="overlay"></div>
+  <aside class="drawer left" id="leftDrawer" aria-hidden="true">
+    <div class="drawer-head"><div><h2 id="leftTitle">Settings</h2><div class="sub" id="leftSub">Tune your session</div></div><button class="close-btn" data-close aria-label="Close panel">×</button></div>
+    <div class="drawer-body" id="leftBody"></div>
+  </aside>
+  <aside class="drawer right" id="rightDrawer" aria-hidden="true">
+    <div class="drawer-head"><div><h2>Progress</h2><div class="sub">Your practice history</div></div><button class="close-btn" data-close aria-label="Close panel">×</button></div>
+    <div class="drawer-body" id="rightBody"></div>
+  </aside>
+</div>
+<script>
+(() => {
+  'use strict';
+  const COLORS = [
+    {name:'red',hex:'#ff657a'}, {name:'blue',hex:'#59a8ff'}, {name:'green',hex:'#58d6a4'},
+    {name:'purple',hex:'#b39aff'}, {name:'yellow',hex:'#f6d65a'}, {name:'cyan',hex:'#52dfeb'},
+    {name:'lime',hex:'#b6ed62'}, {name:'magenta',hex:'#f078d2'}, {name:'orange',hex:'#ffa45e'}
+  ];
+  const SHAPES = ['square','circle','triangle','star','octagon','pentagon','hexagon','heptagon','rhomb'];
+  const DIGITS = [1,2,3,4,5,6,7,8,9];
+  const DIGIT_WORDS = {1:'one',2:'two',3:'three',4:'four',5:'five',6:'six',7:'seven',8:'eight',9:'nine'};
+  const COLOR_BY_NAME = Object.fromEntries(COLORS.map(c => [c.name,c]));
+  const $ = id => document.getElementById(id);
+  const random = arr => arr[Math.floor(Math.random()*arr.length)];
+  const shuffle = arr => { const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+  const pickOther = (arr, value) => random(arr.filter(v => v !== value));
+  const escapeHtml = value => String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const fmtTime = secs => { secs=Math.max(0,Math.floor(secs||0)); const h=Math.floor(secs/3600),m=Math.floor((secs%3600)/60),s=secs%60; return h ? `${h}h ${String(m).padStart(2,'0')}m` : `${m}:${String(s).padStart(2,'0')}`; };
+  const todayKey = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+  const prettyDate = key => { if(!key) return '—'; const [y,m,d]=key.split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}); };
+  const defaults = {trials:50,mappingEvery:20,shiftCount:2,mappingAnnouncementSeconds:3,colors:true,shapes:true,digits:true,sets:4,nogo:false,maxPerSet:8,stroop:'none',attentionEvery:8,responseTimeLimitEnabled:false,responseTimeLimitSeconds:2,setButtonLabels:['1','2','3','4','5','6','7','8','9'],setButtonShortcuts:['1','2','3','4','5','6','7','8','9']};
+  const state = {
+    settings:{...defaults,setButtonLabels:[...defaults.setButtonLabels],setButtonShortcuts:[...defaults.setButtonShortcuts]}, maps:[], digitMaps:[], session:null, trial:null, completed:0, correct:0,
+    attention:{color:'word',shape:'text',digit:'glyph'}, drawer:null, bannerTimer:null, bannerPriority:0, noGoTimer:null, responseTimer:null, feedbackTimer:null, locked:false,
+    stats:{totalSeconds:0,totalTrials:0,correctTrials:0,days:[],sessions:[]}
+  };
+
+  function loadStats(){
+    try { const saved=JSON.parse(localStorage.getItem('cf-progress-v1')||'null'); if(saved && typeof saved==='object') state.stats={...state.stats,...saved,days:Array.isArray(saved.days)?saved.days:[],sessions:Array.isArray(saved.sessions)?saved.sessions:[]}; }
+    catch(e) { /* clean start if local storage is unavailable */ }
+  }
+  function saveStats(){ try { localStorage.setItem('cf-progress-v1',JSON.stringify(state.stats)); } catch(e) {} }
+  function loadButtonLabels(){
+    try{
+      const saved=JSON.parse(localStorage.getItem('cf-button-labels-v1')||'null');
+      if(Array.isArray(saved))state.settings.setButtonLabels=Array.from({length:9},(_,i)=>typeof saved[i]==='string'?saved[i].slice(0,12):String(i+1));
+    }catch(e){/* use default labels when storage is unavailable */}
+  }
+  function saveButtonLabels(){try{localStorage.setItem('cf-button-labels-v1',JSON.stringify(state.settings.setButtonLabels));}catch(e){}}
+  function isKeyboardCharacter(value){return typeof value==='string' && /^[\x21-\x7E]$/.test(value);}
+  function shortcutId(value){return isKeyboardCharacter(value)?value.toLowerCase():'';}
+  function makeUniqueShortcuts(preferred){
+    const out=Array(9).fill(''), used=new Set();
+    // Reserve all distinct label-matching shortcuts first, so earlier fallback digits
+    // don't prevent a later set from using its own single-character label.
+    preferred.forEach((value,i)=>{const key=String(value??'');const id=shortcutId(key);if(id&&!used.has(id)){out[i]=key;used.add(id);}});
+    const fallbackPool=[...'123456789',...'ABCDEFGHIJKLMNOPQRSTUVWXYZ',...'!@#$%^&*()-_=+[]{};:,.?/'];
+    for(let i=0;i<9;i++){
+      if(out[i])continue;
+      const candidates=[String(i+1),...fallbackPool];
+      const candidate=candidates.find(k=>{const id=shortcutId(k);return id&&!used.has(id);});
+      if(candidate){out[i]=candidate;used.add(shortcutId(candidate));}
+      else out[i]=String(i+1);
+    }
+    return out;
+  }
+  function loadButtonShortcuts(){
+    try{
+      const saved=JSON.parse(localStorage.getItem('cf-button-shortcuts-v1')||'null');
+      if(Array.isArray(saved))state.settings.setButtonShortcuts=makeUniqueShortcuts(Array.from({length:9},(_,i)=>isKeyboardCharacter(saved[i])?saved[i]:''));
+      else state.settings.setButtonShortcuts=makeUniqueShortcuts(state.settings.setButtonLabels);
+    }catch(e){state.settings.setButtonShortcuts=makeUniqueShortcuts(state.settings.setButtonLabels);}
+    saveButtonShortcuts();
+  }
+  function saveButtonShortcuts(){try{localStorage.setItem('cf-button-shortcuts-v1',JSON.stringify(state.settings.setButtonShortcuts));}catch(e){}}
+  function getSetButtonLabel(setNum){
+    const label=state.settings.setButtonLabels?.[setNum-1];
+    return typeof label==='string'&&label.trim()?label:String(setNum);
+  }
+  function getSetButtonShortcut(setNum){
+    const key=state.settings.setButtonShortcuts?.[setNum-1];
+    return isKeyboardCharacter(key)?key:String(setNum);
+  }
+  function shortcutIsUsed(key, exceptIndex=-1){
+    const id=shortcutId(key);if(!id)return false;
+    return state.settings.setButtonShortcuts.some((value,i)=>i!==exceptIndex&&shortcutId(value)===id);
+  }
+  function showShortcutStatus(message){const el=$('shortcutStatus');if(el)el.textContent=message||'Use one letter, number, or punctuation key. Single-character labels become shortcuts when available; shape symbols usually use a separate key. Shortcuts must be unique.';}
+  function updateSetButtonLabels(){
+    document.querySelectorAll('.set-button').forEach(button=>{
+      const n=Number(button.dataset.set),label=getSetButtonLabel(n),shortcut=getSetButtonShortcut(n);
+      const span=button.querySelector('.button-label');if(span)span.textContent=label;
+      // Keep set numbers and keyboard shortcuts out of the visible button face.
+      button.setAttribute('aria-label',`Set ${n}: ${label} (keyboard shortcut ${shortcut})`);
+    });
+    for(let i=1;i<=state.settings.sets;i++){const input=$(`setButtonShortcut${i}`);if(input)input.value=getSetButtonShortcut(i);}
+  }
+  function applyRandomButtonLabels(pool){
+    const labels=[...state.settings.setButtonLabels];
+    const chosen=shuffle(pool).slice(0,state.settings.sets);
+    for(let i=0;i<state.settings.sets;i++)labels[i]=chosen[i]||String(i+1);
+    state.settings.setButtonLabels=labels;
+    state.settings.setButtonShortcuts=makeUniqueShortcuts(labels);
+    saveButtonLabels();saveButtonShortcuts();renderSettingsPanel();renderAnswerButtons();
+    showShortcutStatus('Shortcuts matched the labels where possible. Labels without a standard single-key shortcut use another unique key.');
+  }
+  function tryMatchLabelShortcut(index,label){
+    if(!isKeyboardCharacter(label))return;
+    if(shortcutIsUsed(label,index)){
+      const owner=state.settings.setButtonShortcuts.findIndex((v,i)=>i!==index&&shortcutId(v)===shortcutId(label));
+      showShortcutStatus(`“${label}” is already assigned to Set ${owner+1}; its current shortcut was kept.`);
+      return;
+    }
+    state.settings.setButtonShortcuts[index]=label;saveButtonShortcuts();showShortcutStatus(`Set ${index+1} shortcut matched its label: ${label}`);
+  }
+  function handleShortcutInput(index,input){
+    const value=input.value;
+    if(!isKeyboardCharacter(value)){
+      input.value=getSetButtonShortcut(index+1);
+      showShortcutStatus('Enter one keyboard character (letter, number, or punctuation).');
+      return;
+    }
+    if(shortcutIsUsed(value,index)){
+      input.value=getSetButtonShortcut(index+1);
+      const owner=state.settings.setButtonShortcuts.findIndex((v,i)=>i!==index&&shortcutId(v)===shortcutId(value));
+      showShortcutStatus(`That key is already assigned to Set ${owner+1}. Choose a different key.`);
+      return;
+    }
+    state.settings.setButtonShortcuts[index]=value;saveButtonShortcuts();updateSetButtonLabels();showShortcutStatus(`Set ${index+1} shortcut set to ${value}.`);
+  }
+  function selectedModes(){
+    if(state.settings.stroop==='double') return ['color','shape'];
+    if(state.settings.stroop==='triple') return ['color','shape','digit'];
+    const out=[]; if(state.settings.colors)out.push('color');if(state.settings.shapes)out.push('shape');if(state.settings.digits)out.push('digit');return out;
+  }
+  function mappingDomainItems(){ return state.maps; }
+  function buildMappings(){
+    const s=state.settings, modes=selectedModes(), cap=s.sets*s.maxPerSet;
+    let items=[];
+    if(s.stroop==='double' || s.stroop==='triple'){
+      const colors=COLORS.slice(0,5), shapes=SHAPES.slice(0,5);
+      let combos=[]; colors.forEach(color=>shapes.forEach(shape=>combos.push({id:`combo:${color.name}:${shape}`,kind:'combo',color:color.name,shape,label:`${color.name.toUpperCase()} ${shape.toUpperCase()}`})));
+      items=shuffle(combos).slice(0,Math.min(combos.length,cap));
+    } else {
+      if(s.colors) COLORS.forEach(c=>items.push({id:`color:${c.name}`,kind:'color',value:c.name,label:c.name.toUpperCase()}));
+      if(s.shapes) SHAPES.forEach(shape=>items.push({id:`shape:${shape}`,kind:'shape',value:shape,label:shape.toUpperCase()}));
+      if(s.digits) DIGITS.forEach(d=>items.push({id:`digit:${d}`,kind:'digit',value:d,label:String(d)}));
+      items=shuffle(items).slice(0,cap);
+    }
+    state.maps=assignSets(items,s.sets,s.maxPerSet);
+    if(s.stroop==='triple'){
+      const digitItems=DIGITS.map(d=>({id:`digit:${d}`,kind:'digit',value:d,label:String(d)}));
+      state.digitMaps=assignSets(shuffle(digitItems).slice(0,Math.min(digitItems.length,cap)),s.sets,s.maxPerSet);
+    } else state.digitMaps=[];
+    if(s.nogo){
+      const all=[...state.maps,...state.digitMaps];
+      const count=Math.max(1,Math.round(all.length*.1));
+      shuffle(all).slice(0,count).forEach(item=>item.noGo=true);
+    }
+    renderAnswerButtons();
+    if(state.drawer==='sets') renderSetsPanel();
+  }
+  function assignSets(items,count,maxPerSet){
+    const buckets=Array.from({length:count},()=>[]);
+    shuffle(items).forEach(item=>{
+      let candidates=buckets.map((b,i)=>({b,i})).filter(x=>x.b.length<maxPerSet);
+      if(!candidates.length)return;
+      candidates.sort((a,b)=>a.b.length-b.b.length);
+      const min=candidates[0].b.length;
+      const tied=candidates.filter(x=>x.b.length===min);
+      const bucket=random(tied).b;
+      item.set=buckets.indexOf(bucket)+1; item.noGo=false; bucket.push(item);
+    });
+    const flat=buckets.flat();
+    return shuffle(flat);
+  }
+  function modeName(mode){ return ({none:'No Stroop',classic:'Classic Stroop',double:'Double Stroop',triple:'Triple Stroop'})[mode]||mode; }
+  function forceModeRequirements(){
+    if(state.settings.stroop==='double'){state.settings.colors=true;state.settings.shapes=true;}
+    if(state.settings.stroop==='triple'){state.settings.colors=true;state.settings.shapes=true;state.settings.digits=true;}
+    if(!state.settings.colors&&!state.settings.shapes&&!state.settings.digits)state.settings.colors=true;
+  }
+  function activeRuleModes(){ return selectedModes(); }
+  function flipAttentionRule(){
+    const modes=activeRuleModes(); if(!modes.length)return;
+    const mode=random(modes);
+    if(mode==='color') state.attention.color=state.attention.color==='word'?'ink':'word';
+    else if(mode==='shape') state.attention.shape=state.attention.shape==='text'?'form':'text';
+    else state.attention.digit=state.attention.digit==='glyph'?'quantity':'glyph';
+    showBanner('Attention rule shifted');
+  }
+  function selectDomainShiftItems(domain,count,maxPerSet,setCount){
+    if(count===0)return [];
+    if(count>domain.length)return null;
+    const counts=Array(setCount).fill(0);
+    domain.forEach(item=>counts[item.set-1]++);
+    const spareCapacity=setCount*maxPerSet-domain.length;
+    // In a valid reassignment, selected items from one old set must fit into
+    // all destination capacity outside that same set. This gives an exact
+    // upper bound for how many items may be selected from each old set.
+    const upper=counts.map(n=>Math.min(n,Math.floor((spareCapacity+count-maxPerSet+n)/2)));
+    if(upper.some(n=>n<0)||upper.reduce((sum,n)=>sum+n,0)<count)return null;
+
+    const order=shuffle(Array.from({length:setCount},(_,i)=>i));
+    const picks=Array(setCount).fill(0);
+    let remaining=count;
+    for(let pos=0;pos<order.length;pos++){
+      const setIndex=order[pos];
+      const laterCapacity=order.slice(pos+1).reduce((sum,index)=>sum+upper[index],0);
+      const minPick=Math.max(0,remaining-laterCapacity);
+      const maxPick=Math.min(upper[setIndex],remaining);
+      if(maxPick<minPick)return null;
+      const pick=minPick+Math.floor(Math.random()*(maxPick-minPick+1));
+      picks[setIndex]=pick;
+      remaining-=pick;
+    }
+    if(remaining!==0)return null;
+    const selected=[];
+    for(let setIndex=0;setIndex<setCount;setIndex++){
+      if(picks[setIndex])selected.push(...shuffle(domain.filter(item=>item.set===setIndex+1)).slice(0,picks[setIndex]));
+    }
+    return selected.length===count?selected:null;
+  }
+  function createShiftPlan(domains,selectedEntries,maxPerSet,setCount){
+    const plan=new Map();
+    for(const domain of domains){
+      const selected=selectedEntries.filter(entry=>entry.domain===domain).map(entry=>entry.item);
+      if(!selected.length)continue;
+      const selectedSet=new Set(selected);
+      const unchangedCounts=Array(setCount).fill(0);
+      domain.forEach(item=>{if(!selectedSet.has(item))unchangedCounts[item.set-1]++;});
+      const capacities=unchangedCounts.map(count=>Math.max(0,maxPerSet-count));
+      const slots=[];
+      capacities.forEach((capacity,setIndex)=>{
+        for(let i=0;i<Math.min(capacity,selected.length);i++)slots.push(setIndex+1);
+      });
+      if(slots.length<selected.length)return null;
+
+      // Match each selected stimulus to a capacity slot in a different set.
+      // This leaves every unselected mapping untouched and cannot exceed maxPerSet.
+      const items=shuffle(selected.map(item=>({item}))).sort((a,b)=>{
+        const aChoices=slots.reduce((n,set)=>n+(set!==a.item.set?1:0),0);
+        const bChoices=slots.reduce((n,set)=>n+(set!==b.item.set?1:0),0);
+        return aChoices-bChoices;
+      });
+      const slotOwner=Array(slots.length).fill(-1);
+      const matchedSlot=Array(items.length).fill(-1);
+      function augment(itemIndex,seenSlots){
+        const item=items[itemIndex].item;
+        const options=shuffle(slots.map((set,index)=>({set,index})).filter(slot=>slot.set!==item.set).map(slot=>slot.index));
+        for(const slotIndex of options){
+          if(seenSlots.has(slotIndex))continue;
+          seenSlots.add(slotIndex);
+          const previous=slotOwner[slotIndex];
+          if(previous===-1||augment(previous,seenSlots)){
+            slotOwner[slotIndex]=itemIndex;
+            matchedSlot[itemIndex]=slotIndex;
+            return true;
+          }
+        }
+        return false;
+      }
+      for(let i=0;i<items.length;i++)if(!augment(i,new Set()))return null;
+      items.forEach((entry,index)=>{
+        const destination=slots[matchedSlot[index]];
+        if(destination===entry.item.set)return;
+        plan.set(entry.item,destination);
+      });
+    }
+    return plan.size===selectedEntries.length?plan:null;
+  }
+  function changeMappings(){
+    const domains=[state.maps,...(state.settings.stroop==='triple'?[state.digitMaps]:[])];
+    const allCount=domains.reduce((sum,domain)=>sum+domain.length,0);
+    const configuredCount=Math.max(1,Math.floor(Number(state.settings.shiftCount)||1));
+    const desiredCount=Math.min(configuredCount,allCount);
+    let plan=null;
+
+    // Find a feasible selection and destination assignment for the exact target.
+    // If a target is mathematically impossible under set-capacity constraints,
+    // reduce it by one and retry. Each successful move changes one selected item only.
+    for(let target=desiredCount;target>=1;target--){
+      const domainOptions=domains.map(domain=>{
+        const options=[];
+        for(let count=0;count<=Math.min(domain.length,target);count++){
+          const selected=selectDomainShiftItems(domain,count,state.settings.maxPerSet,state.settings.sets);
+          if(selected!==null)options.push({count,selected});
+        }
+        return options;
+      });
+      function chooseDomain(index,remaining,selectedEntries){
+        if(index===domains.length)return remaining===0?selectedEntries:null;
+        const options=shuffle(domainOptions[index].filter(option=>option.count<=remaining));
+        for(const option of options){
+          const next=selectedEntries.concat(option.selected.map(item=>({item,domain:domains[index]})));
+          const result=chooseDomain(index+1,remaining-option.count,next);
+          if(result)return result;
+        }
+        return null;
+      }
+      const selection=chooseDomain(0,target,[]);
+      if(selection){
+        plan=createShiftPlan(domains,selection,state.settings.maxPerSet,state.settings.sets);
+        if(plan&&plan.size===target)break;
+        plan=null;
+      }
+    }
+
+    const changes=[];
+    if(plan){
+      plan.forEach((to,item)=>{
+        const from=item.set;
+        if(from!==to){item.set=to;changes.push({item,from,to});}
+      });
+    }
+    if(changes.length){
+      const header=changes.length===configuredCount?'MAPPINGS SHIFTED':(changes.length===desiredCount&&desiredCount<configuredCount?`MAPPINGS SHIFTED (${changes.length} AVAILABLE)`:`MAPPINGS SHIFTED (${changes.length}/${configuredCount} REQUESTED)`);
+      const lines=[header,...changes.map(({item,from,to})=>`${item.label}: SET ${from} (${getSetButtonLabel(from)}) → SET ${to} (${getSetButtonLabel(to)})`)];
+      showBanner(lines.join('\n'),state.settings.mappingAnnouncementSeconds,2,true);
+    }else{
+      showBanner(`NO VALID MAPPING SHIFT POSSIBLE (${configuredCount} REQUESTED)`,state.settings.mappingAnnouncementSeconds,2,true);
+    }
+    if(state.drawer==='sets')renderSetsPanel();
+  }
+  function showBanner(message,durationSeconds=1.5,priority=1,isMapping=false){
+    const el=$('shiftBanner');
+    // A lower-priority attention notice must not replace the detailed mapping changes.
+    if(el.classList.contains('visible')&&state.bannerPriority>priority)return;
+    el.textContent=message;
+    el.classList.toggle('mapping-change',!!isMapping);
+    el.classList.add('visible');
+    state.bannerPriority=priority;
+    if(state.bannerTimer)clearTimeout(state.bannerTimer);
+    state.bannerTimer=setTimeout(()=>{
+      if(state.bannerPriority===priority){
+        el.classList.remove('visible','mapping-change');
+        el.textContent='';
+        state.bannerPriority=0;
+      }
+    },Math.max(0,durationSeconds*1000));
+  }
+  function randomAttention(){
+    state.attention={color:Math.random()<.5?'word':'ink',shape:Math.random()<.5?'text':'form',digit:Math.random()<.5?'glyph':'quantity'};
+  }
+  function startSession(){
+    if(state.session)return;
+    forceModeRequirements(); buildMappings(); randomAttention();
+    state.session={startedAt:Date.now(),day:todayKey(),trials:0,correct:0,planned:state.settings.trials};
+    state.completed=0;state.correct=0;state.locked=false;clearTimeout(state.noGoTimer);clearTimeout(state.responseTimer);clearTimeout(state.feedbackTimer);
+    if(!state.stats.days.includes(state.session.day)){state.stats.days.push(state.session.day);saveStats();}
+    renderSettingsPanel();renderProgressPanel();
+    generateTrial(); renderSessionMeta(); renderAnswerButtons(); closeDrawers();
+  }
+  function endSession(reason='ended'){
+    if(!state.session)return;
+    clearTimeout(state.noGoTimer);clearTimeout(state.responseTimer);clearTimeout(state.feedbackTimer);state.locked=true;
+    const sess=state.session; const duration=Math.max(0,Math.round((Date.now()-sess.startedAt)/1000));
+    state.stats.totalSeconds+=duration;state.stats.totalTrials+=sess.trials;state.stats.correctTrials+=sess.correct;
+    state.stats.sessions.unshift({day:sess.day,duration,trials:sess.trials,correct:sess.correct,accuracy:sess.trials?sess.correct/sess.trials:0,reason});
+    state.stats.sessions=state.stats.sessions.slice(0,30);saveStats();
+    state.session=null;state.trial=null;state.locked=false;
+    $('stepLabel').textContent='';$('ruleLine').textContent='';$('shiftBanner').classList.remove('visible');
+    $('stimulusStage').classList.remove('dim');
+    $('stimulusStage').innerHTML=`<div class="empty-state"><div class="empty-title">${reason==='complete'?'Session complete':'Session ended'}</div><div class="empty-sub">${sess.trials} trials · ${sess.trials?Math.round(sess.correct/sess.trials*100):0}% accuracy · ${fmtTime(duration)}</div><button class="primary-btn" id="mainStart">Start another</button></div>`;
+    $('mainStart').addEventListener('click',startSession);
+    $('answerPrompt').textContent='Session finished';$('feedback').textContent='';$('feedback').className='feedback';
+    renderAnswerButtons();renderSessionMeta();renderSettingsPanel();renderProgressPanel();
+  }
+  function chooseTarget(){ return random(state.maps); }
+  function createClassicTrial(item){
+    const trial={mode:'classic',item,noGo:!!item.noGo,kind:item.kind,step:0};
+    if(item.kind==='color'){
+      const src=state.attention.color, val=item.value;
+      trial.colorWord=src==='word'?val:pickOther(COLORS.map(c=>c.name),val);
+      trial.inkColor=src==='ink'?val:pickOther(COLORS.map(c=>c.name),val);
+      trial.attentionLabel=src==='word'?'COLOR — WRITTEN':'COLOR — COLOR OF TEXT';
+    } else if(item.kind==='shape'){
+      const src=state.attention.shape,val=item.value;
+      trial.shapeWord=src==='text'?val:pickOther(SHAPES,val);
+      trial.shapeForm=src==='form'?val:pickOther(SHAPES,val);
+      trial.attentionLabel=src==='text'?'SHAPE — TEXT':'SHAPE — FORM';
+    } else {
+      const src=state.attention.digit==='quantity'?'word':'glyph'; const val=item.value;
+      trial.digitGlyph=src==='glyph'?val:random(DIGITS.filter(v=>v!==val));
+      trial.digitWord=src==='word'?DIGIT_WORDS[val]:DIGIT_WORDS[pickOther(DIGITS,val)];
+      trial.attentionLabel=src==='glyph'?'DIGIT — NUMBER':'DIGIT — WORD';
+    }
+    return trial;
+  }
+  function generateTrial(){
+    if(!state.session)return;
+    clearTimeout(state.noGoTimer);clearTimeout(state.responseTimer);state.locked=false;
+    const mode=state.settings.stroop;
+    let trial;
+    if(mode==='classic'){
+      const choices=state.maps.filter(i=>selectedModes().includes(i.kind==='color'?'color':i.kind==='shape'?'shape':'digit'));
+      trial=createClassicTrial(random(choices.length?choices:state.maps));
+      trial.noGo=!!trial.item.noGo;
+    } else if(mode==='double'){
+      const item=chooseTarget(); const color= item.color, shape=item.shape;
+      const colorSrc=state.attention.color, shapeSrc=state.attention.shape;
+      trial={mode:'double',item,noGo:!!item.noGo,step:0,
+        colorWord:colorSrc==='word'?color:pickOther(COLORS.slice(0,5).map(c=>c.name),color),
+        inkColor:colorSrc==='ink'?color:pickOther(COLORS.slice(0,5).map(c=>c.name),color),
+        shapeWord:shapeSrc==='text'?shape:pickOther(SHAPES.slice(0,5),shape),
+        shapeForm:shapeSrc==='form'?shape:pickOther(SHAPES.slice(0,5),shape),
+        shapeInk:random(COLORS).name,
+        attentionLabel:`COLOR — ${colorSrc==='word'?'WRITTEN':'COLOR OF TEXT'}  ·  SHAPE — ${shapeSrc==='text'?'TEXT':'FORM'}`};
+    } else if(mode==='triple'){
+      const item=chooseTarget(), digitItem=random(state.digitMaps);
+      const color=item.color,shape=item.shape,digit=digitItem.value;
+      const colorSrc=state.attention.color, shapeSrc=state.attention.shape, digitSrc=state.attention.digit;
+      const quantity=digitSrc==='quantity'?digit:random(DIGITS.filter(v=>v!==digit));
+      trial={mode:'triple',item,digitItem,noGo:!!item.noGo||!!digitItem.noGo,step:0,partialCorrect:false,
+        colorWord:colorSrc==='word'?color:pickOther(COLORS.slice(0,5).map(c=>c.name),color),
+        inkColor:colorSrc==='ink'?color:pickOther(COLORS.slice(0,5).map(c=>c.name),color),
+        shapeWord:shapeSrc==='text'?shape:pickOther(SHAPES.slice(0,5),shape),
+        shapeForm:shapeSrc==='form'?shape:pickOther(SHAPES.slice(0,5),shape),
+        shapeInk:random(COLORS).name,
+        digitGlyph:digitSrc==='glyph'?digit:random(DIGITS.filter(v=>v!==digit)),
+        quantity,
+        attentionLabel:`COLOR — ${colorSrc==='word'?'WRITTEN':'COLOR OF TEXT'}  ·  SHAPE — ${shapeSrc==='text'?'TEXT':'FORM'}  ·  DIGIT — ${digitSrc==='glyph'?'NUMBER':'QUANTITY'}`};
+    } else {
+      const item=chooseTarget(); trial={mode:'none',item,noGo:!!item.noGo,step:0};
+    }
+    state.trial=trial; renderTrial();
+    if(state.settings.responseTimeLimitEnabled){
+      const limitTrial=trial;
+      state.responseTimer=setTimeout(()=>{
+        if(!state.session||state.trial!==limitTrial||state.locked)return;
+        // Withholding a response on a no-go trial is correct; all other timeouts are misses.
+        if(limitTrial.noGo)finishTrial(true,'Correct · withheld');
+        else finishTrial(false,'Missed');
+      },Math.round(state.settings.responseTimeLimitSeconds*1000));
+    }else if(trial.noGo){
+      state.noGoTimer=setTimeout(()=>{if(state.session&&state.trial===trial&&!state.locked)finishTrial(true,'Correct · withheld');},950);
+    }
+  }
+  function shapePoints(shape){
+    if(shape==='triangle')return [[50,7],[94,91],[6,91]];
+    if(shape==='rhomb')return [[50,4],[96,50],[50,96],[4,50]];
+    if(shape==='square')return [[9,9],[91,9],[91,91],[9,91]];
+    if(shape==='circle')return null;
+    if(shape==='star'){
+      const pts=[];for(let i=0;i<10;i++){const r=i%2===0?45:19;const a=(-90+i*36)*Math.PI/180;pts.push([50+Math.cos(a)*r,50+Math.sin(a)*r]);}return pts;
+    }
+    const sides={pentagon:5,hexagon:6,heptagon:7,octagon:8}[shape]||6;const pts=[];
+    for(let i=0;i<sides;i++){const a=(-90+i*360/sides)*Math.PI/180;pts.push([50+44*Math.cos(a),50+44*Math.sin(a)]);}return pts;
+  }
+  function shapeSvg(shape,color,size=112){
+    const pts=shapePoints(shape);let el;
+    if(shape==='circle')el=`<circle cx="50" cy="50" r="43"/>`;
+    else el=`<polygon points="${pts.map(p=>p.join(',')).join(' ')}"/>`;
+    return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" aria-label="${escapeHtml(shape)}"><g fill="${COLOR_BY_NAME[color]?.hex||color||'#e9edff'}" stroke="rgba(255,255,255,.2)" stroke-width="2" stroke-linejoin="round">${el}</g></svg>`;
+  }
+  function plural(shape){return ({circle:'CIRCLES',square:'SQUARES',triangle:'TRIANGLES',star:'STARS',octagon:'OCTAGONS',pentagon:'PENTAGONS',hexagon:'HEXAGONS',heptagon:'HEPTAGONS',rhomb:'RHOMBS'})[shape]||shape.toUpperCase()+'S';}
+  function setStepUi(){
+    const t=state.trial; if(!t){$('stepLabel').textContent='';return;}
+    if(t.mode==='triple'&&!t.noGo){
+      $('stepLabel').textContent=t.step===0?'STEP 1 OF 2 · COLOR + SHAPE':'STEP 2 OF 2 · DIGIT';
+      $('answerPrompt').textContent=t.step===0?'Choose the color + shape set':'Choose the digit set';
+    }else{
+      $('stepLabel').textContent='';$('answerPrompt').textContent=t.noGo?'Do not respond':'Choose the matching set';
+    }
+  }
+  function renderTrial(){
+    const t=state.trial;if(!t)return;
+    const stage=$('stimulusStage');stage.classList.remove('dim');let html='';
+    $('ruleLine').textContent=t.mode==='none'?'MATCH THE STIMULUS TO ITS SET':t.attentionLabel;
+    setStepUi();
+    if(t.mode==='none'){
+      if(t.item.kind==='color')html=`<div class="stimulus-word" style="color:${COLOR_BY_NAME[t.item.value].hex}">${escapeHtml(t.item.value.toUpperCase())}</div>`;
+      else if(t.item.kind==='shape')html=`<div class="shape-stage">${shapeSvg(t.item.value,'#e9edff',128)}</div>`;
+      else html=`<div class="stimulus-word">${t.item.value}</div>`;
+    }else if(t.mode==='classic'){
+      if(t.kind==='color')html=`<div class="stimulus-word" style="color:${COLOR_BY_NAME[t.inkColor].hex}">${escapeHtml(t.colorWord.toUpperCase())}</div>`;
+      else if(t.kind==='shape')html=`<div class="shape-stage">${shapeSvg(t.shapeForm,'#e9edff',118)}</div><div class="stimulus-pair" style="font-size:clamp(22px,4vw,37px);color:#dfe4fa">${escapeHtml(t.shapeWord.toUpperCase())}</div>`;
+      else html=`<div class="digit-pair"><div class="digit-glyph">${t.digitGlyph}</div><div class="digit-word">${escapeHtml(t.digitWord.toUpperCase())}</div></div>`;
+    }else if(t.mode==='double'){
+      html=`<div class="stimulus-pair" style="color:${COLOR_BY_NAME[t.inkColor].hex}">${escapeHtml(t.colorWord.toUpperCase())} ${escapeHtml(t.shapeWord.toUpperCase())}</div><div class="shape-stage">${shapeSvg(t.shapeForm,t.shapeInk,116)}</div>`;
+    }else{
+      html=`<div class="stimulus-pair" style="color:${COLOR_BY_NAME[t.inkColor].hex}">${t.digitGlyph} ${escapeHtml(t.colorWord.toUpperCase())} ${escapeHtml(plural(t.shapeWord.toLowerCase()))}</div><div class="quantity-stage">${Array.from({length:t.quantity},()=>shapeSvg(t.shapeForm,t.shapeInk,48)).join('')}</div>`;
+    }
+    stage.innerHTML=html;
+    renderAnswerButtons();renderSessionMeta();
+    $('feedback').textContent='';$('feedback').className='feedback';
+    if(state.drawer==='sets')renderSetsPanel();
+  }
+  function renderAnswerButtons(){
+    const box=$('answerButtons');box.innerHTML='';
+    for(let i=1;i<=state.settings.sets;i++){
+      const label=getSetButtonLabel(i);
+      const b=document.createElement('button');b.className='set-button';b.type='button';const shortcut=getSetButtonShortcut(i);b.innerHTML=`<span class="button-label">${escapeHtml(label)}</span>`;b.setAttribute('aria-label',`Set ${i}: ${label} (keyboard shortcut ${shortcut})`);b.dataset.set=String(i);
+      b.disabled=!state.session||state.locked;
+      b.addEventListener('click',()=>handleSetPress(i));box.appendChild(b);
+    }
+  }
+  function handleSetPress(setNum){
+    if(!state.session||!state.trial||state.locked)return;
+    const t=state.trial;
+    if(t.noGo){clearTimeout(state.noGoTimer);finishTrial(false);return;}
+    if(t.mode==='triple'){
+      if(t.step===0){
+        t.partialCorrect=setNum===t.item.set;t.step=1;
+        $('feedback').textContent=t.partialCorrect?'First response ✓':'First response ✕';$('feedback').className='feedback '+(t.partialCorrect?'good':'bad');
+        setStepUi();renderAnswerButtons();
+      }else{
+        const ok=t.partialCorrect && setNum===t.digitItem.set;
+        finishTrial(ok);
+      }
+    }else finishTrial(setNum===t.item.set);
+  }
+  function finishTrial(ok, resultLabel=null){
+    if(!state.session||!state.trial||state.locked)return;
+    state.locked=true;clearTimeout(state.noGoTimer);clearTimeout(state.responseTimer);
+    const current=state.session;
+    current.trials+=1;state.completed=current.trials;
+    if(ok){current.correct+=1;state.correct=current.correct;}
+    $('feedback').textContent=resultLabel||(ok?'Correct':'Incorrect');$('feedback').className='feedback '+(ok?'good':'bad');
+    const finishReason=current.trials>=current.planned?'complete':null;
+    $('stimulusStage').classList.add('dim');
+    renderAnswerButtons();renderSessionMeta();
+    const delayMs=330;
+    state.feedbackTimer=setTimeout(()=>{
+      if(!state.session)return;
+      if(finishReason){endSession('complete');return;}
+      if(state.settings.mappingEvery>0&&current.trials%state.settings.mappingEvery===0)changeMappings();
+      if(state.settings.stroop!=='none'&&state.settings.attentionEvery>0&&current.trials%state.settings.attentionEvery===0)flipAttentionRule();
+      generateTrial();
+      if(state.drawer==='progress')renderProgressPanel();
+      if(state.drawer==='sets')renderSetsPanel();
+    },delayMs);
+  }
+  function renderSessionMeta(){
+    if(!state.session){$('sessionMeta').textContent='';return;}
+    const elapsed=Math.floor((Date.now()-state.session.startedAt)/1000);
+    $('sessionMeta').textContent=`TRIAL ${Math.min(state.session.trials+1,state.session.planned)} / ${state.session.planned}  ·  ${fmtTime(elapsed)}`;
+  }
+  function renderSettingsPanel(){
+    const s=state.settings;const locked=!!state.session;
+    $('leftTitle').textContent='Settings';$('leftSub').textContent=locked?'Session in progress':'Tune your session';
+    $('leftBody').innerHTML=`
+      <section class="setting-section">
+        <div class="section-label">Session</div>
+        <div class="session-controls"><button class="secondary-btn ${locked?'danger-btn':''}" id="panelSessionBtn">${locked?'End session':'Start session'}</button><button class="secondary-btn" id="resetSettings">Reset settings</button></div>
+        ${locked?'<div class="settings-note">End the session to change its settings.</div>':''}
+      </section>
+      <fieldset id="optionsFieldset" ${locked?'disabled':''}>
+        <section class="setting-section">
+          <div class="section-label">Task</div>
+          <div class="field-grid">
+            <div class="field"><label for="trialCount">Trials per session</label><input id="trialCount" type="number" min="1" max="999" value="${s.trials}"></div>
+            <div class="field"><label for="setCount">Number of sets</label><select id="setCount">${Array.from({length:8},(_,i)=>i+2).map(n=>`<option value="${n}" ${s.sets===n?'selected':''}>${n} sets</option>`).join('')}</select></div>
+            <div class="field"><label for="mappingEvery">Shift mappings every</label><input id="mappingEvery" type="number" min="0" max="999" value="${s.mappingEvery}"><div class="hint">0 = off</div></div>
+            <div class="field"><label for="shiftCount">Stimuli to shift</label><input id="shiftCount" type="number" min="1" max="99" value="${s.shiftCount}"></div>
+            <div class="field full"><label for="mappingAnnouncementSeconds">Mapping announcement duration <span class="hint">seconds</span></label><input id="mappingAnnouncementSeconds" type="number" min="0.5" max="15" step="0.1" value="${s.mappingAnnouncementSeconds}"><div class="hint">Show each changed stimulus and its new set above the stimulus.</div></div>
+            <div class="field"><label for="maxPerSet">Max stimuli per set</label><input id="maxPerSet" type="number" min="1" max="50" value="${s.maxPerSet}"></div>
+            <div class="field"><label for="attentionEvery">Attention shift every</label><input id="attentionEvery" type="number" min="0" max="999" value="${s.attentionEvery}"><div class="hint">0 = off</div></div>
+            <div class="field full"><label>Response deadline</label><label class="toggle-chip" style="width:100%"><input type="checkbox" id="responseTimeLimitToggle" ${s.responseTimeLimitEnabled?'checked':''}> Require a response before time runs out</label></div>
+            <div class="field full"><label for="responseTimeLimitSeconds">Response time limit <span class="hint">seconds</span></label><input id="responseTimeLimitSeconds" type="number" min="0.1" max="10" step="0.1" value="${s.responseTimeLimitSeconds}" ${s.responseTimeLimitEnabled?'':'disabled'}><div class="hint">If time expires, the trial is missed. No-go trials count as correct if you withhold.</div></div>
+            <div class="field full"><label for="stroopMode">Stroop mode</label><select id="stroopMode"><option value="none" ${s.stroop==='none'?'selected':''}>None</option><option value="classic" ${s.stroop==='classic'?'selected':''}>Classic</option><option value="double" ${s.stroop==='double'?'selected':''}>Double</option><option value="triple" ${s.stroop==='triple'?'selected':''}>Triple</option></select></div>
+          </div>
+        </section>
+        <section class="setting-section">
+          <div class="section-label">Button rebinding</div>
+          <div class="field-grid">
+            ${Array.from({length:s.sets},(_,i)=>{const n=i+1;return `<div class="field"><label for="setButtonLabel${n}">Set ${n} label</label><input type="text" id="setButtonLabel${n}" value="${escapeHtml(s.setButtonLabels?.[i]??String(n))}" maxlength="12" autocomplete="off" spellcheck="false" placeholder="${n}"></div><div class="field"><label for="setButtonShortcut${n}">Keyboard shortcut</label><input type="text" id="setButtonShortcut${n}" value="${escapeHtml(s.setButtonShortcuts?.[i]??String(n))}" maxlength="4" autocomplete="off" spellcheck="false" placeholder="Key" aria-label="Keyboard shortcut for Set ${n}"></div>`;}).join('')}
+          </div>
+          <div class="rebind-actions"><button type="button" class="secondary-btn" id="randomChars">Random characters</button><button type="button" class="secondary-btn" id="randomShapes">Random shapes</button><button type="button" class="secondary-btn" id="resetButtonLabels" style="grid-column:1/-1">Reset labels and shortcuts</button></div>
+          <div class="settings-note" id="shortcutStatus" aria-live="polite">Use one letter, number, or punctuation key. Single-character labels become shortcuts when available; shape symbols usually use a separate key. Shortcuts must be unique.</div>
+        </section>
+        <section class="setting-section">
+          <div class="section-label">Stimuli</div>
+          <div class="toggle-row">
+            <label class="toggle-chip"><input type="checkbox" id="colorsToggle" ${s.colors?'checked':''} ${['double','triple'].includes(s.stroop)?'disabled':''}> Colors</label>
+            <label class="toggle-chip"><input type="checkbox" id="shapesToggle" ${s.shapes?'checked':''} ${['double','triple'].includes(s.stroop)?'disabled':''}> Shapes</label>
+            <label class="toggle-chip"><input type="checkbox" id="digitsToggle" ${s.digits?'checked':''} ${s.stroop==='triple'?'disabled':''}> Digits</label>
+          </div>
+          <div class="settings-note">Double uses colors + shapes. Triple adds digits.</div>
+        </section>
+        <section class="setting-section">
+          <div class="section-label">Inhibition</div>
+          <label class="toggle-chip" style="width:100%"><input type="checkbox" id="nogoToggle" ${s.nogo?'checked':''}> No-go ICT</label>
+        </section>
+      </fieldset>`;
+    $('panelSessionBtn').addEventListener('click',()=>state.session?endSession('ended'):startSession());
+    $('resetSettings').addEventListener('click',()=>{if(state.session)return;state.settings={...defaults,setButtonLabels:[...defaults.setButtonLabels],setButtonShortcuts:[...defaults.setButtonShortcuts]};saveButtonLabels();saveButtonShortcuts();forceModeRequirements();buildMappings();renderSettingsPanel();});
+    if(locked)return;
+    const bindNum=(id,key,min,max)=>$(id).addEventListener('change',e=>{let val=Number(e.target.value);if(!Number.isFinite(val))val=defaults[key];val=Math.max(min,Math.min(max,Math.floor(val)));state.settings[key]=val;e.target.value=val;buildMappings();renderSettingsPanel();});
+    bindNum('trialCount','trials',1,999);bindNum('mappingEvery','mappingEvery',0,999);bindNum('shiftCount','shiftCount',1,99);bindNum('maxPerSet','maxPerSet',1,50);bindNum('attentionEvery','attentionEvery',0,999);
+    for(let i=1;i<=s.sets;i++){
+      const input=$(`setButtonLabel${i}`),shortcutInput=$(`setButtonShortcut${i}`);
+      input.addEventListener('input',e=>{
+        const label=e.target.value.slice(0,12);state.settings.setButtonLabels[i-1]=label;saveButtonLabels();tryMatchLabelShortcut(i-1,label);updateSetButtonLabels();
+      });
+      input.addEventListener('change',e=>{e.target.value=state.settings.setButtonLabels[i-1];});
+      shortcutInput.addEventListener('change',()=>handleShortcutInput(i-1,shortcutInput));
+      shortcutInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();shortcutInput.blur();}});
+    }
+    $('randomChars').addEventListener('click',()=>applyRandomButtonLabels(Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*+=?')));
+    $('randomShapes').addEventListener('click',()=>applyRandomButtonLabels(['●','■','▲','◆','★','⬟','⬢','◉','✦','◈','○','□','△','◇','✚','✿']));
+    $('resetButtonLabels').addEventListener('click',()=>{state.settings.setButtonLabels=[...defaults.setButtonLabels];state.settings.setButtonShortcuts=[...defaults.setButtonShortcuts];saveButtonLabels();saveButtonShortcuts();renderSettingsPanel();renderAnswerButtons();});
+    $('mappingAnnouncementSeconds').addEventListener('change',e=>{let val=Number(e.target.value);if(!Number.isFinite(val))val=defaults.mappingAnnouncementSeconds;val=Math.max(0.5,Math.min(15,Math.round(val*10)/10));state.settings.mappingAnnouncementSeconds=val;e.target.value=val;});
+    $('responseTimeLimitToggle').addEventListener('change',e=>{state.settings.responseTimeLimitEnabled=e.target.checked;renderSettingsPanel();});
+    $('responseTimeLimitSeconds').addEventListener('change',e=>{let val=Number(e.target.value);if(!Number.isFinite(val))val=defaults.responseTimeLimitSeconds;val=Math.max(0.1,Math.min(10,Math.round(val*10)/10));state.settings.responseTimeLimitSeconds=val;e.target.value=val;});
+    $('setCount').addEventListener('change',e=>{state.settings.sets=Number(e.target.value);buildMappings();renderSettingsPanel();});
+    $('stroopMode').addEventListener('change',e=>{state.settings.stroop=e.target.value;forceModeRequirements();buildMappings();renderSettingsPanel();});
+    ['colors','shapes','digits'].forEach(key=>{const id=key==='colors'?'colorsToggle':key==='shapes'?'shapesToggle':'digitsToggle';$(id).addEventListener('change',e=>{state.settings[key]=e.target.checked;forceModeRequirements();buildMappings();renderSettingsPanel();});});
+    $('nogoToggle').addEventListener('change',e=>{state.settings.nogo=e.target.checked;buildMappings();renderSettingsPanel();});
+  }
+  function renderSetsPanel(){
+    $('leftTitle').textContent='Sets';$('leftSub').textContent=`${state.settings.sets} response sets`;
+    const double=['double','triple'].includes(state.settings.stroop);
+    const grouped=Array.from({length:state.settings.sets},(_,i)=>({set:i+1,items:state.maps.filter(x=>x.set===i+1)}));
+    const renderItem=item=>`<div class="mapping-item ${item.noGo?'no-go':''}"><span>${escapeHtml(item.label)}</span><span class="set-tag">${item.set} · ${escapeHtml(getSetButtonLabel(item.set))}</span>${item.noGo?'<span class="ng">No-go</span>':''}</div>`;
+    let body='';
+    if(!state.maps.length){body='<div class="mapping-empty">No stimuli are available. Enable a stimulus type in Settings.</div>';}
+    if(double){
+      body+=`<div class="mapping-group"><div class="mapping-title"><strong>${state.settings.stroop==='triple'?'Color + shape':'Color + shape'}</strong><span>${state.maps.length} stimuli</span></div><div class="mapping-items">${state.maps.map(renderItem).join('')}</div></div>`;
+      if(state.settings.stroop==='triple')body+=`<div class="mapping-group"><div class="mapping-title"><strong>Digits</strong><span>${state.digitMaps.length} stimuli</span></div><div class="mapping-items">${state.digitMaps.map(renderItem).join('')}</div></div>`;
+    }else{
+      grouped.forEach(g=>{body+=`<div class="mapping-group"><div class="mapping-title"><strong>Set ${g.set} · ${escapeHtml(getSetButtonLabel(g.set))}</strong><span>${g.items.length} stimuli</span></div><div class="mapping-items">${g.items.map(item=>`<div class="mapping-item ${item.noGo?'no-go':''}">${escapeHtml(item.label)}${item.noGo?'<span class="ng">No-go</span>':''}</div>`).join('')||'<span class="tiny-muted">No stimuli</span>'}</div></div>`;});
+    }
+    const nogoItems=[...state.maps,...state.digitMaps].filter(x=>x.noGo);
+    $('leftBody').innerHTML=`<div class="section-label">Current mappings</div>${body}<div class="setting-section" style="margin-top:22px"><div class="mapping-title"><strong>No-go set</strong><span>${state.settings.nogo?nogoItems.length:0} stimuli</span></div>${state.settings.nogo?`<div class="mapping-items">${nogoItems.map(x=>`<div class="mapping-item no-go">${escapeHtml(x.label)}<span class="ng">No-go</span></div>`).join('')||'<span class="tiny-muted">None assigned</span>'}</div>`:'<div class="mapping-empty">No-go ICT is off.</div>'}</div><div class="tiny-muted">Mappings can shift during a session. Open this panel to check the current sets.</div>`;
+  }
+  function renderProgressPanel(){
+    const s=state.stats;const accuracy=s.totalTrials?Math.round(s.correctTrials/s.totalTrials*100):0;
+    const live=state.session;const today=todayKey();
+    const sessions=(s.sessions||[]).slice(0,10);
+    $('rightBody').innerHTML=`
+      <div class="stats-grid">
+        <div class="stat-card"><div class="value">${fmtTime(s.totalSeconds+(live?Math.floor((Date.now()-live.startedAt)/1000):0))}</div><div class="label">Time played</div></div>
+        <div class="stat-card"><div class="value">${s.totalTrials?accuracy+'%':'—'}</div><div class="label">Overall accuracy</div></div>
+        <div class="stat-card"><div class="value">${s.days.length}</div><div class="label">Days played</div></div>
+        <div class="stat-card"><div class="value">${s.sessions.length+(live?1:0)}</div><div class="label">Sessions</div></div>
+      </div>
+      <div class="section-label">Current session</div>
+      <div class="progress-row"><span>Status</span><strong>${live?'In progress':'Not started'}</strong></div>
+      <div class="progress-row"><span>Mode</span><strong>${modeName(state.settings.stroop)}</strong></div>
+      <div class="progress-row"><span>Trials</span><strong>${live?`${live.trials} / ${live.planned}`:'—'}</strong></div>
+      <div class="progress-row"><span>Accuracy</span><strong>${live&&live.trials?Math.round(live.correct/live.trials*100)+'%':'—'}</strong></div>
+      <div class="section-label" style="margin-top:24px">Recent sessions</div>
+      ${sessions.length?sessions.map(x=>`<div class="history-item"><div><div class="date">${prettyDate(x.day)}</div><div class="detail">${x.trials} trials · ${fmtTime(x.duration)}</div></div><div class="percent">${Math.round((x.accuracy||0)*100)}%</div></div>`).join(''):'<div class="mapping-empty">Your completed sessions will appear here.</div>'}
+      <div class="tiny-muted" style="margin-top:18px">Progress is saved on this device.</div>`;
+  }
+  function openDrawer(which){
+    if(which==='settings')renderSettingsPanel();if(which==='sets')renderSetsPanel();if(which==='progress')renderProgressPanel();
+    state.drawer=which;$('overlay').classList.add('open');$('overlay').setAttribute('aria-hidden','false');
+    $('leftDrawer').classList.toggle('open',which==='settings'||which==='sets');$('leftDrawer').setAttribute('aria-hidden',String(!(which==='settings'||which==='sets')));
+    $('rightDrawer').classList.toggle('open',which==='progress');$('rightDrawer').setAttribute('aria-hidden',String(which!=='progress'));
+  }
+  function closeDrawers(){state.drawer=null;$('overlay').classList.remove('open');$('overlay').setAttribute('aria-hidden','true');$('leftDrawer').classList.remove('open');$('rightDrawer').classList.remove('open');$('leftDrawer').setAttribute('aria-hidden','true');$('rightDrawer').setAttribute('aria-hidden','true');}
+  function renderInitial(){
+    buildMappings();renderAnswerButtons();renderSettingsPanel();renderProgressPanel();
+    $('openSettings').addEventListener('click',()=>openDrawer('settings'));
+    $('openSets').addEventListener('click',()=>openDrawer('sets'));
+    $('openProgress').addEventListener('click',()=>openDrawer('progress'));
+    $('overlay').addEventListener('click',closeDrawers);
+    document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',closeDrawers));
+    $('mainStart').addEventListener('click',startSession);
+    document.addEventListener('keydown',e=>{
+      if(e.key==='Escape'){closeDrawers();return;}
+      if(!state.session||state.drawer||e.ctrlKey||e.metaKey||e.altKey)return;
+      const target=e.target;
+      if(target && (target.isContentEditable || ['INPUT','TEXTAREA','SELECT'].includes(target.tagName)))return;
+      const pressed=shortcutId(e.key);
+      if(!pressed)return;
+      const index=state.settings.setButtonShortcuts.slice(0,state.settings.sets).findIndex(key=>shortcutId(key)===pressed);
+      if(index>=0){e.preventDefault();handleSetPress(index+1);}
+    });
+    setInterval(()=>{if(state.session){renderSessionMeta();if(state.drawer==='progress')renderProgressPanel();}},1000);
+  }
+  loadStats();loadButtonLabels();loadButtonShortcuts();renderInitial();
+})();
+</script>
+</body>
+</html>
